@@ -37,18 +37,25 @@ grep -q 'source \$HOME/.cargo/env' ~/.bashrc || echo 'source $HOME/.cargo/env' >
 source ~/.bashrc
 
 echo "=== Install Soundness CLI if not exists ==="
-if [ ! -f "$HOME/.cargo/bin/soundnessup" ]; then
+if ! command -v soundnessup >/dev/null 2>&1 && \
+   [ ! -f "$HOME/.cargo/bin/soundnessup" ] && \
+   [ ! -f "$HOME/.local/bin/soundnessup" ]; then
   curl -sSL https://raw.githubusercontent.com/soundnesslabs/soundness-layer/main/soundnessup/install | bash
 else
-  echo "soundnessup already installed: $($HOME/.cargo/bin/soundnessup --version || echo 'version check failed')"
+  echo "soundnessup already installed (detected in PATH or bin folders)"
 fi
 
 echo "=== Run CLI installer ==="
-if [ -x "$HOME/.cargo/bin/soundnessup" ]; then
+if command -v soundnessup >/dev/null 2>&1; then
+  soundnessup install
+elif [ -x "$HOME/.cargo/bin/soundnessup" ]; then
   "$HOME/.cargo/bin/soundnessup" install
+elif [ -x "$HOME/.local/bin/soundnessup" ]; then
+  "$HOME/.local/bin/soundnessup" install
 else
-  echo "⚠️ soundnessup binary not found in $HOME/.cargo/bin/"
-  echo "👉 Coba tutup terminal, buka lagi, lalu jalankan: soundnessup install"
+  echo "⚠️ soundnessup binary not found."
+  echo "👉 Coba tutup terminal, buka lagi, lalu jalankan:"
+  echo "   source ~/.bashrc && soundnessup install"
 fi
 
 echo "=== Done! Restart terminal atau jalankan 'source ~/.bashrc' lagi ==="
