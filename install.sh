@@ -1,48 +1,54 @@
 #!/bin/bash
 set -e
 
-# 1. Update system
-sudo apt update && sudo apt upgrade -y
+SKIP_UPDATE=false
 
-# 2. Install Rust (skip kalau sudah ada)
-if ! command -v rustc >/dev/null 2>&1; then
-  echo "[*] Installing Rust..."
-  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-  source $HOME/.cargo/env
+# Cek flag
+for arg in "$@"; do
+  case $arg in
+    --skip-update)
+      SKIP_UPDATE=true
+      shift
+      ;;
+  esac
+done
+
+if [ "$SKIP_UPDATE" = false ]; then
+  echo "=== Update & upgrade ==="
+  sudo apt update && sudo apt upgrade -y
 else
-  echo "[✔] Rust already installed: $(rustc --version)"
+  echo "=== Skip apt update & upgrade ==="
 fi
 
-# 3. Load Rust environment
-source $HOME/.cargo/env
+echo "=== Install Rust if not exists ==="
+if ! command -v rustc &> /dev/null; then
+  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+  source "$HOME/.cargo/env"
+else
+  echo "Rust already installed: $(rustc --version)"
+fi
 
-# 4. Check Rust version
+echo "=== Check Rust version ==="
 rustc --version
 cargo --version
 
-# 5. Add cargo env to bashrc if missing
-if ! grep -q 'source $HOME/.cargo/env' ~/.bashrc; then
-  echo 'source $HOME/.cargo/env' >> ~/.bashrc
-fi
+echo "=== Ensure Rust env in bashrc ==="
+grep -q 'source \$HOME/.cargo/env' ~/.bashrc || echo 'source $HOME/.cargo/env' >> ~/.bashrc
 source ~/.bashrc
 
-# 6. Install Soundness CLI (skip kalau sudah ada)
-if ! command -v soundnessup >/dev/null 2>&1; then
-  echo "[*] Installing Soundness CLI..."
+echo "=== Install Soundness CLI if not exists ==="
+if [ ! -f "$HOME/.cargo/bin/soundnessup" ]; then
   curl -sSL https://raw.githubusercontent.com/soundnesslabs/soundness-layer/main/soundnessup/install | bash
-  source ~/.bashrc
 else
-  echo "[✔] Soundness CLI already installed"
+  echo "soundnessup already installed: $($HOME/.cargo/bin/soundnessup --version || echo 'version check failed')"
 fi
 
-# 7. Run soundnessup install (cek PATH dulu)
-if command -v soundnessup >/dev/null 2>&1; then
-  soundnessup install
-elif [ -x "$HOME/.cargo/bin/soundnessup" ]; then
+echo "=== Run CLI installer ==="
+if [ -x "$HOME/.cargo/bin/soundnessup" ]; then
   "$HOME/.cargo/bin/soundnessup" install
 else
-  echo "[✘] soundnessup not found, try reopening your shell and run: soundnessup install"
-  exit 1
+  echo "⚠️ soundnessup binary not found in $HOME/.cargo/bin/"
+  echo "👉 Coba tutup terminal, buka lagi, lalu jalankan: soundnessup install"
 fi
 
-echo "[✔] Setup complete!"
+echo "=== Done! Restart terminal atau jalankan 'source ~/.bashrc' lagi ==="
