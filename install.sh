@@ -18,9 +18,8 @@ source ~/.bashrc
 
 echo "=== Install Soundness CLI ==="
 curl -sSL https://raw.githubusercontent.com/soundnesslabs/soundness-layer/main/soundnessup/install | bash
-source ~/.bashrc
 
 echo "=== Run CLI installer ==="
-soundnessup install
+exec bash -l -c "soundnessup install"
 
 echo "=== Selesai! Restart terminal atau jalankan 'source ~/.bashrc' lagi ==="
