@@ -1,49 +1,31 @@
 #!/bin/bash
 set -e
 
-SKIP_UPDATE=false
+# 1. Update system
+sudo apt update && sudo apt upgrade -y
 
-# Cek flag
-for arg in "$@"; do
-  case $arg in
-    --skip-update)
-      SKIP_UPDATE=true
-      shift
-      ;;
-  esac
-done
+# 2. Install Rust
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 
-if [ "$SKIP_UPDATE" = false ]; then
-  echo "=== Update & upgrade ==="
-  sudo apt update && sudo apt upgrade -y
-else
-  echo "=== Skip apt update & upgrade ==="
-fi
+# 3. Load Rust environment
+source $HOME/.cargo/env
 
-echo "=== Install Rust if not exists ==="
-if ! command -v rustc &> /dev/null; then
-  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-  source "$HOME/.cargo/env"
-else
-  echo "Rust already installed: $(rustc --version)"
-fi
-
-echo "=== Check Rust version ==="
+# 4. Check Rust version
 rustc --version
 cargo --version
 
-echo "=== Ensure Rust env in bashrc ==="
-grep -q 'source \$HOME/.cargo/env' ~/.bashrc || echo 'source $HOME/.cargo/env' >> ~/.bashrc
+# 5. Permanently add cargo env to bashrc
+if ! grep -q 'source $HOME/.cargo/env' ~/.bashrc; then
+  echo 'source $HOME/.cargo/env' >> ~/.bashrc
+fi
 source ~/.bashrc
 
-echo "=== Install Soundness CLI if not exists ==="
-if [ ! -f "$HOME/.cargo/bin/soundnessup" ]; then
-  curl -sSL https://raw.githubusercontent.com/soundnesslabs/soundness-layer/main/soundnessup/install | bash
-else
-  echo "soundnessup already installed: $($HOME/.cargo/bin/soundnessup --version || echo 'version check failed')"
-fi
+# 6. Install Soundness CLI
+curl -sSL https://raw.githubusercontent.com/soundnesslabs/soundness-layer/main/soundnessup/install | bash
 
-echo "=== Run CLI installer ==="
-"$HOME/.cargo/bin/soundnessup" install || echo "⚠️ soundnessup install failed, try running manually after restarting shell."
+# 7. Reload bashrc
+source ~/.bashrc
 
-echo "=== Done! Restart terminal or run 'source ~/.bashrc' again ==="
+# 8. Install with soundnessup
+soundnessup install
+
