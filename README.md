@@ -10,3 +10,6 @@ git clone https://github.com/SuNewbie/soundness-setup.git
 cd soundness-setup
 chmod +x install.sh
 ./install.sh
+source ~/.bashrc
+soundnessup install
+
